@@ -7,3 +7,7 @@ class AuthenticationStrategy(ABC):
     def get_token(self):
         pass
 
+    @abstractmethod
+    def get_url(self):
+        pass
+

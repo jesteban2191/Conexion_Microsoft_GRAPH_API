@@ -10,3 +10,6 @@ class AuthContext:
 
     def get_token(self) -> dict[str, Any]:
         return self._strategy.get_token()
+    
+    def get_url(self) -> str:
+        return self._strategy.get_url()

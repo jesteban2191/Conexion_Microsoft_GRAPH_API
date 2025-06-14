@@ -2,6 +2,7 @@
 from auth_interface import AuthenticationStrategy
 import requests
 from typing import Any
+from decorators.decorators import check_type_args
 class MSGraphAuth (AuthenticationStrategy):
 
     def __init__(self, cliente_id: str, cliente_secret: str, tenant_id: str, site_id: str) -> None:
@@ -15,8 +16,7 @@ class MSGraphAuth (AuthenticationStrategy):
         self._scope = f"https://graph.microsoft.com/.default"
         self._main_url = f"https://graph.microsoft.com/v1.0/sites/{self._site_id}"
         self._url_token = f"https://login.microsoftonline.com/{self._tenant_id}/oauth2/v2.0/token"
-
-        
+ 
     def get_token(self) -> dict[str: Any]:
         '''Método para obtener el token para la conexión con el repositorio de Sharepoint'''
         self._params = {
@@ -30,4 +30,8 @@ class MSGraphAuth (AuthenticationStrategy):
         acces_token = response.json()["acces_token"]
 
         return acces_token
+    
+    def get_url(self) -> str:
+        '''Método para obtener la url del repositorio de Sharepoint'''
+        return self._main_url
     
