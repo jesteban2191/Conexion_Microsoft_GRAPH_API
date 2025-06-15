@@ -65,6 +65,7 @@ def construir_json(row: pd.Series, df_columns_format: pd.DataFrame) -> str:
 ### Convertir tiempo en segundos a tiempo en Horas:Minutos:Segundos
 ##########################################################################
 
+@check_type_args
 def segundos_a_horas_minutos_segundos(segundos: float) -> str:
     horas = int(segundos)//3600
     sobrante_1 = int(segundos)%3600
@@ -86,3 +87,53 @@ def segundos_a_horas_minutos_segundos(segundos: float) -> str:
     
     tiempo_str = horas_str+':'+minutos_str+':'+segundos_str
     return tiempo_str
+
+
+###########################################################################
+### Crear una clave primaria (PK) a partir de una lista de columnas
+###########################################################################
+
+@check_type_args
+def crear_pk(data: pd.DataFrame, pk: List[str]) -> pd.DataFrame:
+    
+    if data.empty:
+        data['PK'] = pd.Series(dtype='str')
+    else:
+        data['PK'] = data[pk].astype(str).agg('-'.join, axis=1)
+        data.set_index('PK', inplace=True)
+
+    return data
+
+###########################################################################
+### Quitar decimales de los campos claves
+###########################################################################
+
+@check_type_args
+def quitar_decimales_pk(data: pd.DataFrame, pk: List[str]) -> pd.DataFrame:
+    
+    data = data.astype(str)
+    decimal = False
+    entero_float = False
+
+    for col in pk:
+        decimal = data[col].str.contains(r'\.[1-9]', regex=True).any()
+        entero_float = data[col].str.contains(r'\.0', na=False, regex= True).any()
+
+        if not decimal and not entero_float:
+            data[col] = data[col].str.replace(".0", "")
+
+    return data
+
+###########################################################################
+### Quitar duplicados de un DataFrame
+###########################################################################
+
+@check_type_args
+def quitar_duplicados_df(self, df: pd.DataFrame, pk: List[str]) -> pd.DataFrame:
+    df_duplicates = df[df.duplicated(subset=pk, keep=False)]
+    print(f"Duplicated items in the DataFrame: \n{df_duplicates.shape[0]}")
+    if not df_duplicates.empty:
+        print("Deleting duplicated items in the DataFrame...")
+        df = df[~df['index_sharepoint'].isin(df_duplicates['index_sharepoint'].tolist())]
+    
+    return df

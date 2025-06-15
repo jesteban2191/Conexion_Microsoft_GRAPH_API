@@ -340,5 +340,97 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
             
 
     @check_type_args
-    def update_collection(self, data: pd.DataFrame, pk: List[str], collection_name: str = "", collection_id: str = "", delete: bool = True, insert: bool = True) -> pd.DataFrame:
-        pass
+    def update_collection(self, data: pd.DataFrame, pk: List[str], collection_name: str = "", collection_id: str = "", delete: bool = True, insert: bool = True, delete_duplicates: bool = False) -> pd.DataFrame:
+        if collection_id or collection_name:
+            # Get token from the authentication context
+            token = self._auth.get_token()
+            self._crud.set_token(token)
+            if not collection_id:
+                # If collection_id is not provided, get the collections to find the id
+                collection_id = self.get_collection_id(collection_name)
+            
+            data_col_columns = self.get_fields(collection_id=collection_id)
+            print(f"Columns: \n{data_col_columns}")
+            list_col_name = data_col_columns['name'].tolist()  # Name of the columns, like you see on Sharepoint (Documento, Telefono, etc.)
+            list_col_data = list(data.columns.values)  # Name of the columns in the DataFrame
+
+            columns_to_insert = compare_columns(list_col_data, list_col_name)  # Compare the columns of the DataFrame with the columns of the collection
+
+            data_col_columns = data_col_columns[data_col_columns['name'] in columns_to_insert]  # Select the columns to insert from the DataFrame
+
+            # Get de items from the collection
+            df_col_items = self.get_items(collection_id=collection_id)
+
+
+            # delete duplicates in the collection items and df items
+            df_col_items = self.quitar_duplicados_en_collections(df_col_items, pk, collection_id, delete_duplicates)
+            data = quitar_duplicados_df(data, pk)
+
+            print('''
+                ---------------------------------------------------------------------------------------------------
+                                    Cambiando tipo_dato de la lista para comparar y hacer merge
+                ---------------------------------------------------------------------------------------------------''')
+            
+            # Convert the columns to string to avoid type errors when merging
+            df_col_items = quitar_decimales_pk(df_col_items, pk)
+            data = quitar_decimales_pk(data, pk)
+            
+            # Create a new column 'PK' in both dataframes to merge them
+            df_col_items = crear_pk(df_col_items, pk)
+            data = crear_pk(data, pk)
+
+            if set(pk).issubset(set(df_col_items.columns)):
+                try:
+                    if df_col_items.empty:
+                        data['index_sharepoint'] = ""
+                        data['action_type']= 'I'
+                    else:
+                        data = pd.merge(
+                            how="left",
+                            left=data,
+                            right=df_col_items[['index_sharepoint']],
+                            left_index=True,
+                            right_index=True
+                        )
+
+                        
+                except Exception as e:
+                    raise ValueError(f"Error while merging data frames: {e}")
+                
+                print(data)
+                print(df_col_items)
+
+                data['json_post'] = data.apply(lambda x: construir_json(x, data_col_columns), axis=1)
+
+
+                
+
+
+    @check_type_args
+    def quitar_duplicados_en_collections(self, df: pd.DataFrame, pk: List[str], collection_id: str, delete_duplicates: bool) -> pd.DataFrame:
+
+        df_col_items_duplicate = df[df.duplicated(subset=pk, keep=False)]
+        print(f"Duplicated items in the collection: \n{df_col_items_duplicate.shape[0]}")
+        if not df_col_items_duplicate.empty:
+            if delete_duplicates:
+                print("Deleting duplicated items...")
+                df = self.delete_items(collection_id=collection_id, id_items=df_col_items_duplicate['index_sharepoint'].tolist())
+            
+            # get items uniques
+            df = df[~df['index_sharepoint'].isin(df_col_items_duplicate['index_sharepoint'].tolist())]
+
+        return df
+    
+    
+
+
+
+
+            
+
+            
+
+                
+            
+
+            

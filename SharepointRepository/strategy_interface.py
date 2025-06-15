@@ -24,6 +24,6 @@ class HandlerSharepointStrategyInterface(ABC):
         pass
 
     @abstractmethod
-    def update_collection(self, data, pk, collection_name="", collection_id="", delete = True, insert = True):
+    def update_collection(self, data, pk, collection_name="", collection_id="", delete = True, insert = True, delete_duplicates = False):
         pass
 
