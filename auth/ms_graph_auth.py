@@ -1,8 +1,8 @@
 '''Estrategía concreta de autenticación mediante Microsoft Graph'''
-from auth_interface import AuthenticationStrategy
+from .auth_interface import AuthenticationStrategy
 import requests
 from typing import Any
-from decorators.decorators import check_type_args
+from decorators import *
 class MSGraphAuth (AuthenticationStrategy):
 
     def __init__(self, cliente_id: str, cliente_secret: str, tenant_id: str, site_id: str) -> None:
@@ -26,8 +26,8 @@ class MSGraphAuth (AuthenticationStrategy):
             "grant_type": "client_credentials",
         }
 
-        response = requests.post(self._url_token, params=self._params)
-        acces_token = response.json()["acces_token"]
+        response = requests.post(url=self._url_token, data=self._params)
+        acces_token = response.json()["access_token"]
 
         return acces_token
     

@@ -1,7 +1,7 @@
-from strategy_interface import HandlerSharepointStrategyInterface
+from .strategy_interface import HandlerSharepointStrategyInterface
 from typing import List, Dict, Any
 from auth import AuthContext, MSGraphAuth
-from decorators.decorators import check_type_args
+from decorators import *
 import pandas as pd
 from CRUD.sharepoint_crud import CRUDSharepointGraphAPI
 from helpers.helpers import *
@@ -44,7 +44,7 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
         mycrud_repository = self._crud.set_token(token)
 
         # Make the request to the SharePoint API to get the lists
-        data = mycrud_repository.url_request(url)
+        data = self._crud.url_request(url)
 
         # Get the data from the response
         data = data["value"]
@@ -168,6 +168,8 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
                 paginar = 0 if next_link is None else 1
 
                 df_list_itmes = pd.DataFrame(columns=list_col_name)
+                dict_total_items = []
+                list_index_sharepoint = []
 
                 while paginar == 1 or primera_pagina == 1:
                     if primera_pagina != 1:
@@ -181,12 +183,13 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
                         
                         paginar = 0 if next_link is None else 1
 
-                    primera_pag = 0
+                    primera_pagina = 0
                     data = data['value']
                     dict_items = [{col: reg['fields'][col] if col in reg['fields'] else "" for col in list_col_name_id} for reg in data]
                     dict_total_items += dict_items
                     list_index_sharepoint += [reg['id'] for reg in data]
                     url = next_link
+                    print(dict_total_items)
                 
                 df_list_itmes = pd.DataFrame(dict_total_items)
                 df_list_itmes['index_sharepoint'] = list_index_sharepoint
@@ -194,9 +197,9 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
                 if df_list_itmes.empty:
                     name_columns = [col for col in list_col_name]
                     name_columns += ['index_sharepoint']
-                    df_list = pd.DataFrame(columns=name_columns)
-                    print(df_list)
-                    print(df_list.columns.tolist())
+                    df_list_itmes = pd.DataFrame(columns=name_columns)
+                    print(df_list_itmes)
+                    print(df_list_itmes.columns.tolist())
             else:
                 df_list_itmes = []
                 print("No hay columnas en la lista. No se pueden obtener los items.")
@@ -208,7 +211,7 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
                                         Finalizo Descarga de items de Lista de Sharepoint
                     ---------------------------------------------------------------------------------------------------''')
             
-        return df_list
+        return df_list_itmes
     
 
     
@@ -345,6 +348,7 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
             # Get token from the authentication context
             token = self._auth.get_token()
             self._crud.set_token(token)
+            start_time = time()
             if not collection_id:
                 # If collection_id is not provided, get the collections to find the id
                 collection_id = self.get_collection_id(collection_name)
@@ -393,6 +397,8 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
                             right_index=True
                         )
 
+                    df_to_update = compare_dataframe(df_col_items, data, delete, insert)
+
                         
                 except Exception as e:
                     raise ValueError(f"Error while merging data frames: {e}")
@@ -400,7 +406,88 @@ class ListSharepoint(HandlerSharepointStrategyInterface):
                 print(data)
                 print(df_col_items)
 
-                data['json_post'] = data.apply(lambda x: construir_json(x, data_col_columns), axis=1)
+                df_to_update['json_post'] = data.apply(lambda x: construir_json(x, data_col_columns), axis=1)
+
+                num_rows = df_to_update.shape[0] #Get the number of rows
+
+                # get the number of rows to update
+                df_to_updt = df_to_update[df_to_update["action_type"] == "U"]
+                num_rows_to_update = df_to_updt.shape[0]
+
+                # get the number of rows to insert
+                df_to_add = df_to_update[df_to_update["action_type"] == "I"]
+                num_rows_to_add = df_to_add.shape[0]
+
+                # get the number of rows to delete
+                df_to_delete = df_to_update[df_to_update["action_type"] == "D"]                    
+                num_rows_to_delete = df_to_delete.shape[0]
+
+                # Initialize counters
+                num_rows_updated = 0
+                num_rows_added = 0
+                num_rows_deleted = 0
+
+                # Get the time elapsed for transforming the data
+                tiempo_transformacion_datos = (time() - start_time)
+                tiempo_transformacion_datos = segundos_a_horas_minutos_segundos(tiempo_transformacion_datos)
+                start_time = time()
+                list_status_code = []
+
+                for num_row_act, row_tuple in enumerate(df_to_update.itertuples(), start=1):
+                    # Refresh the token every 2000 rows to avoid expiration
+                    if num_row_act % 2000 == 0:
+                        print("--------------------- Refrescando conexión--------------------", end='\r')
+                        token = self._auth.get_token()
+                        self._crud.set_token(token)
+
+                    # Get the json to post and the item id
+                    value_row_json = str(row_tuple.json_post).replace('/','')
+                    item_id = row_tuple.index_sharepoint
+
+                    if row_tuple.action_type == 'U':
+                        #Create the URL to update the item
+                        url = f"{self._auth.get_url()}/lists/{collection_id}/items/{item_id}/fields"
+                        # Convert the value_row_json to a json format
+                        dato_json = value_row_json.replace('/','')
+                        dato_json = json.loads(dato_json)
+                        # Make the request to update the item
+                        status_code = self._crud.url_patch(url, dato_json)
+                        num_rows_updated += 1
+                    elif row_tuple.action_type == "I":
+                        # Create the URL to insert the item
+                        url = f"{self._auth.get_url()}/lists/{collection_id}/items"
+                        # Conver the value_row_json to a json format
+                        dato_json = '{"fields": ' + value_row_json.replace('/','') + '}'
+                        dato_json = json.loads(dato_json)
+                        # Make the request to insert the item
+                        status_code = self._crud.url_posts(url, dato_json)
+                        num_rows_added += 1
+                    elif row_tuple.action_type == "D":
+                        url = f"{self._auth.get_url()}/lists/{collection_id}/items/{item_id}"
+                        status_code = self._crud.url_delete(url)
+                        num_rows_deleted +=1
+
+                    tiempo_en_actualizacion = (time() - start_time)
+                    tiempo_en_actualizacion = self.segundos_a_horas_minutos_segundos(tiempo_en_actualizacion)
+                    os.system('cls')
+                    print(f'''-------------------------------------------------------------------------------------------------
+                            To Update --> {num_rows_to_update}, To Add --> {num_rows_to_add}, To Delete --> {num_rows_to_delete}
+                            Updated --> {num_rows_updated}, Added --> {num_rows_added}, Deleted --> {num_rows_deleted}
+                            Tiempo en tratamiento de datos --> {tiempo_transformacion_datos}
+                            Tiempo transcurrido en actualización --> {tiempo_en_actualizacion}
+                            ------------Actualizando: {round((num_row_act/(num_rows))*100,2)}% ------------''')
+                    
+                    list_status_code.append(status_code)
+
+                df_to_update['status_code'] = list_status_code
+            else:
+                missing = set(pk) - set(df_col_items.columns)
+                raise ValueError(f"The following key columns were not found in the SharePoint Dataframe: {list(missing)}")            
+        else:
+            raise ValueError("Collection name or ID must be provided.")
+        
+        return df_to_update
+        
 
 
                 
