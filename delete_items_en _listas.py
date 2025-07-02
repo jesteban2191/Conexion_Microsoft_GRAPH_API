@@ -1,4 +1,4 @@
-from Service import *
+from MicrosoftGraphAPI import *
 import os
 import dotenv
 import pandas as pd
@@ -26,7 +26,7 @@ def main():
 
     list_items_to_delete = [16, 17, 18, 19]
 
-    data = list_handler.delete_items(collection_name= "prueba5",id_items=1, delete_all= 1)
+    data = list_handler.delete_items(collection_name= "prueba5",id_items=[], delete_all= True)
 
     print(data)
 

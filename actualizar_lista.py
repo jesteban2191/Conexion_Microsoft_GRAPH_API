@@ -1,4 +1,4 @@
-from Service import *
+from MicrosoftGraphAPI import *
 import os
 import dotenv
 import pandas as pd
@@ -34,7 +34,7 @@ def main():
         {"Nombre cliente": "Jabalí",
          "Apellido cliente": "Walker",
          "Correo": "jabalihumocojidowalker@yahoo.com"},
-        {"Nombre cliente": "Tomás",
+         {"Nombre cliente": "Tomás",
          "Apellido cliente": "Roncero",
          "Correo": "tomasroncero@gmail.com"}
     ]
@@ -43,7 +43,7 @@ def main():
 
     pk = ["Nombre cliente", "Apellido cliente"]
 
-    data = list_handler.update_collection(data= df_to_insert, pk= pk, collection_name= "prueba5", delete= False, insert= True, delete_duplicates= True)
+    data = list_handler.update_collection(data= df_to_insert, pk= pk, collection_name= "prueba5", delete= True, insert= True, delete_duplicates= True)
 
     print(data)
 

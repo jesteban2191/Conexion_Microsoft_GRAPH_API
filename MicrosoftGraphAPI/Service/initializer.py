@@ -1,8 +1,8 @@
-from auth import *
-from CRUD import *
-from SharepointRepository import *
+from ..auth import *
+from ..CRUD import *
+from ..SharepointRepository import *
 from .initializer_interface import InitializerInterface
-from decorators import *
+from ..decorators import *
 
 
 class ListInitializeSharepoint(InitializerInterface):

@@ -3,7 +3,7 @@ import numpy as np
 import json
 import os
 from datetime import datetime, timedelta
-from decorators import *
+from ..decorators import *
 from typing import List, Dict, Any
 
 ##############################################################################

@@ -1,7 +1,7 @@
 from .base_repository import CRUDRepositoryInterface
 import requests
 from typing import Any
-from decorators import *
+from ..decorators import *
 
 class CRUDSharepointGraphAPI(CRUDRepositoryInterface):
 

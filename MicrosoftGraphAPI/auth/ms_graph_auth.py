@@ -2,7 +2,7 @@
 from .auth_interface import AuthenticationStrategy
 import requests
 from typing import Any
-from decorators import *
+from ..decorators import *
 class MSGraphAuth (AuthenticationStrategy):
 
     def __init__(self, cliente_id: str, cliente_secret: str, tenant_id: str, site_id: str) -> None:

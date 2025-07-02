@@ -1,10 +1,10 @@
 from .strategy_interface import HandlerSharepointStrategyInterface
 from typing import List, Dict, Any
-from auth import AuthContext, MSGraphAuth
-from decorators import *
+from ..auth import AuthContext, MSGraphAuth
+from ..decorators import *
 import pandas as pd
-from CRUD.sharepoint_crud import CRUDSharepointGraphAPI
-from helpers.helpers import *
+from ..CRUD.sharepoint_crud import CRUDSharepointGraphAPI
+from ..helpers.helpers import *
 from time import time
 
 class ListSharepoint(HandlerSharepointStrategyInterface):
