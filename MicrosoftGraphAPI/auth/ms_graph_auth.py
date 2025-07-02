@@ -1,9 +1,23 @@
-'''Estrategía concreta de autenticación mediante Microsoft Graph'''
+
 from .auth_interface import AuthenticationStrategy
 import requests
 from typing import Any
 from ..decorators import *
 class MSGraphAuth (AuthenticationStrategy):
+
+    """Estrategia de autenticación basada en el consumo de la API Microsoft GRAPH para el manejo de sitios Sharepoint
+    
+    Args:
+        client_id (str): Este argumento es obligatorio y debe tener el id del cliente con los permisos de lectura y escritrua sobre el sitio.
+        client_secret (str): Este argumento es obligatorio y debe tener el secret del cliente con los permisos de lectura y escritura del sitio.
+        tenant_id (str): Este argumento es obligatorio y debe tener el identificador único de tu organización en Azure AD o Microsoft Entra ID.
+        site_id (str): Este argumento es obligatorio y debe tener el identificador del sitio al que quieres ingresar.
+        
+    Raises: 
+        TypeError: Se lanza esta excepción cuando no se recibe alguno de los argumentos o cuando algunos de los argumentos no es de tipo str.
+         
+    Ejemplo:
+        msgraph = MSGraphAuth(client_id = "id", cliente_secret = "secret", tenant_id = "tenant", site_id = "site")  """
 
     def __init__(self, cliente_id: str, cliente_secret: str, tenant_id: str, site_id: str) -> None:
 
@@ -17,8 +31,16 @@ class MSGraphAuth (AuthenticationStrategy):
         self._main_url = f"https://graph.microsoft.com/v1.0/sites/{self._site_id}"
         self._url_token = f"https://login.microsoftonline.com/{self._tenant_id}/oauth2/v2.0/token"
  
-    def get_token(self) -> dict[str: Any]:
-        '''Método para obtener el token para la conexión con el repositorio de Sharepoint'''
+    def get_token(self) -> str:
+        """Método para obtener el token para la conexión con el repositorio de Sharepoint.
+        
+        Return:
+            str: Devuelve el token necesario para poder hacer cualquier solicitud a la Microsoft Graph API.
+        
+        Ejemplo:
+            msgraph = MSGraphAuth(client_id = "id", cliente_secret = "secret", tenant_id = "tenant", site_id = "site")
+            token = msgraph.get_token()
+        """
         self._params = {
             "client_id": self._client_id,
             "scope": self._scope,
@@ -32,6 +54,13 @@ class MSGraphAuth (AuthenticationStrategy):
         return acces_token
     
     def get_url(self) -> str:
-        '''Método para obtener la url del repositorio de Sharepoint'''
+        """Método para obtener la url del repositorio de Sharepoint
+        Return:
+            str: Devuelve la url principal necesario para poder hacer cualquier solicitud a la Microsoft Graph API.
+        
+        Ejemplo:
+            msgraph = MSGraphAuth(client_id = "id", cliente_secret = "secret", tenant_id = "tenant", site_id = "site")
+            main_url = msgraph.get_url()
+        """
         return self._main_url
     
