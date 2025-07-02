@@ -38,9 +38,9 @@ class CRUDSharepointGraphAPI(CRUDRepositoryInterface):
         return data
         
     @check_type_args
-    def url_posts(self, url: str, data: dict[str: Any]) -> int:
+    def url_posts(self, url: str, data: str) -> int:
 
-        self._response = requests.post(url, headers= self._headers, json= data)
+        self._response = requests.post(url, headers= self._headers, data= data)
         self.status_request = self._response.status_code
 
         if self.status_request in (200, 201):
@@ -49,9 +49,9 @@ class CRUDSharepointGraphAPI(CRUDRepositoryInterface):
             raise requests.HTTPError(f"Error {self.status_request}: {self._response.text}")
     
     @check_type_args
-    def url_patch(self, url: str, data: dict[str: Any]) -> int:
+    def url_patch(self, url: str, data: str) -> int:
  
-        self._response = requests.patch(url, headers=self._headers, json= data)
+        self._response = requests.patch(url, headers=self._headers, data= data)
 
         self.status_request = self._response.status_code
 

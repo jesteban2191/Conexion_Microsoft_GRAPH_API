@@ -1,10 +1,8 @@
-from auth import *
-from CRUD import *
-from SharepointRepository import *
+from Service import *
 import os
 import dotenv
 
-def initialize() -> ListSharepoint:
+def initialize():
     directory = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(directory, ".env")
 
@@ -15,12 +13,9 @@ def initialize() -> ListSharepoint:
     site_id = os.getenv("SITE_ID")
     tenant_id = os.getenv("TENANT_ID")
 
-    msgraph = MSGraphAuth(cliente_id= client_id, cliente_secret= client_secret, tenant_id= tenant_id, site_id= site_id)
-    auth = AuthContext(msgraph)
+    init = ListInitializeSharepoint(client_id=client_id, client_secret= client_secret, site_id= site_id, tenant_id= tenant_id)
 
-    crud = CRUDSharepointGraphAPI()
-
-    list_handler = ListSharepoint(crud= crud, auth= auth)
+    list_handler = init.InitializeSharepoint()
 
     return list_handler
 

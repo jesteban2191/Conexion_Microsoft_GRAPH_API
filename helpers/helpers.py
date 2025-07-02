@@ -14,7 +14,7 @@ def compare_columns(data_fields: List[str], collection_fields: List[str]) -> Dic
 
     if collection_fields and data_fields:
         
-        columnas_diferentes = 1 if set(data_fields).issubset(set(collection_fields)) else 0
+        columnas_diferentes = 1 if not(set(data_fields).issubset(set(collection_fields)))  else 0
         if columnas_diferentes == 1:
             columnas_diferentes = list(set(data_fields) - set(collection_fields))
             raise ValueError(f"Don't found the next columns in collections fields: {columnas_diferentes}")
@@ -110,17 +110,17 @@ def crear_pk(data: pd.DataFrame, pk: List[str]) -> pd.DataFrame:
 
 @check_type_args
 def quitar_decimales_pk(data: pd.DataFrame, pk: List[str]) -> pd.DataFrame:
-    
-    data = data.astype(str)
-    decimal = False
-    entero_float = False
+    if not data.empty:
+        data = data.astype(str)
+        decimal = False
+        entero_float = False
 
-    for col in pk:
-        decimal = data[col].str.contains(r'\.[1-9]', regex=True).any()
-        entero_float = data[col].str.contains(r'\.0', na=False, regex= True).any()
+        for col in pk:
+            decimal = data[col].str.contains(r'\.[1-9]', regex=True).any()
+            entero_float = data[col].str.contains(r'\.0', na=False, regex= True).any()
 
-        if not decimal and not entero_float:
-            data[col] = data[col].str.replace(".0", "")
+            if not decimal and not entero_float:
+                data[col] = data[col].str.replace(".0", "")
 
     return data
 
@@ -129,7 +129,7 @@ def quitar_decimales_pk(data: pd.DataFrame, pk: List[str]) -> pd.DataFrame:
 ###########################################################################
 
 @check_type_args
-def quitar_duplicados_df(self, df: pd.DataFrame, pk: List[str]) -> pd.DataFrame:
+def quitar_duplicados_df(df: pd.DataFrame, pk: List[str]) -> pd.DataFrame:
     df_duplicates = df[df.duplicated(subset=pk, keep=False)]
     print(f"Duplicated items in the DataFrame: \n{df_duplicates.shape[0]}")
     if not df_duplicates.empty:
@@ -169,7 +169,7 @@ def compare_dataframe(df_web = pd.DataFrame(), df_to_compare = pd.DataFrame(), d
     decimal = df_web.apply(lambda col: col.str.contains(r'\.[1-9]', regex=True).any(), axis=0)
     entero_float = df_web.apply(lambda col: col.str.contains(r'\.0', na=False, regex=True).any(), axis=0)
 
-    # Reemplazar ".0" en las columnas si no hay decimales pero hay enteros flotantes
+        # Reemplazar ".0" en las columnas si no hay decimales pero hay enteros flotantes
     for col in common_columns:
         if not decimal[col] and entero_float[col]:
             df_web[col] = df_web[col].str.replace(".0", "")
@@ -269,18 +269,12 @@ def obtener_filas_con_datos_diferentes(df: pd.DataFrame, df_to_compare: pd.DataF
         left_index=True,
         right_index=True
     )
+    common_index = df_columns_key_eq.index
 
     # Filtrar los DataFrames con los registros comunes
-    df_filter = df.merge(df_columns_key_eq, 
-                        left_index=True, 
-                        right_index=True, 
-                        how='inner')
+    df_filter = df[df.index.isin(common_index)]
     
-    df_to_compare_filter = df_to_compare.merge(df_columns_key_eq, 
-                                                left_index=True, 
-                                                right_index=True, 
-                                                how='inner')
-    
+    df_to_compare_filter = df_to_compare[df_to_compare.index.isin(common_index)]
     # Ordenar y resetear el índice
     df_filter = df_filter.sort_index()
     df_to_compare_filter = df_to_compare_filter.sort_index()
@@ -310,6 +304,7 @@ def obtener_filas_con_datos_diferentes(df: pd.DataFrame, df_to_compare: pd.DataF
     df_merged['action_type'] = df_merged.apply(compare_rows, axis=1)
 
     # Filtrar los registros que se deben actualizar
+    df_to_compare_filter['action_type'] = df_merged.loc[df_to_compare_filter.index, 'action_type']
     df_to_compare_filter = df_to_compare_filter[df_to_compare_filter["action_type"] == "U"]
     print(df_to_compare_filter)
 
@@ -346,3 +341,17 @@ def obtener_substrn(cadena: str, Key_ini: str, Key_fin: str) -> str:
     else:
         substr = np.nan
     return str(substr)
+
+
+
+##############################################################################
+### Función para cambiar el nombre de las columnas de acuerdo a un dataframe y sus columnas claves
+##############################################################################
+
+@check_type_args
+def cambiar_col_df(data: pd.DataFrame, df_columns: pd.DataFrame, col_name_id: str, col_name: str) -> pd.DataFrame:
+
+    mapping = dict(zip(df_columns[col_name_id], df_columns[col_name]))
+    data = data.rename(columns= mapping)
+
+    return data
