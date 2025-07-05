@@ -17,7 +17,10 @@ class MSGraphAuth (AuthenticationStrategy):
         TypeError: Se lanza esta excepción cuando no se recibe alguno de los argumentos o cuando algunos de los argumentos no es de tipo str.
          
     Ejemplo:
-        msgraph = MSGraphAuth(client_id = "id", cliente_secret = "secret", tenant_id = "tenant", site_id = "site")  """
+        msgraph = MSGraphAuth(client_id = "id", cliente_secret = "secret", tenant_id = "tenant", site_id = "site")  
+    
+    Nota: Esta versión contiene específicamente el manejo de las listas de sharepoint de un sitio de sharepoint, está basado en la API disponibilizada por Microsoft llamada Microsoft Graph. Este paquete contiene toda la lógica interna para que el manejo de las listas sea fácil y amigable, sin embargo si se desea saber como funciona el paquete o se quire usar alguna de las funcionalidades de este paqeute por separado por favor refrenciarse en el siguiente link: https://learn.microsoft.com/es-es/graph/api/list-list?view=graph-rest-1.0&tabs=http
+    """
 
     def __init__(self, cliente_id: str, cliente_secret: str, tenant_id: str, site_id: str) -> None:
 
@@ -40,6 +43,8 @@ class MSGraphAuth (AuthenticationStrategy):
         Ejemplo:
             msgraph = MSGraphAuth(client_id = "id", cliente_secret = "secret", tenant_id = "tenant", site_id = "site")
             token = msgraph.get_token()
+        
+        Nota: Esta versión contiene específicamente el manejo de las listas de sharepoint de un sitio de sharepoint, está basado en la API disponibilizada por Microsoft llamada Microsoft Graph. Este paquete contiene toda la lógica interna para que el manejo de las listas sea fácil y amigable, sin embargo si se desea saber como funciona el paquete o se quire usar alguna de las funcionalidades de este paqeute por separado por favor refrenciarse en el siguiente link: https://learn.microsoft.com/es-es/graph/api/list-list?view=graph-rest-1.0&tabs=http
         """
         self._params = {
             "client_id": self._client_id,
@@ -57,10 +62,13 @@ class MSGraphAuth (AuthenticationStrategy):
         """Método para obtener la url del repositorio de Sharepoint
         Return:
             str: Devuelve la url principal necesario para poder hacer cualquier solicitud a la Microsoft Graph API.
+                La estructura de esta url es la siguiente: https://graph.microsoft.com/v1.0/sites/{site-id}/
         
         Ejemplo:
             msgraph = MSGraphAuth(client_id = "id", cliente_secret = "secret", tenant_id = "tenant", site_id = "site")
             main_url = msgraph.get_url()
+        
+        Nota: Esta versión contiene específicamente el manejo de las listas de sharepoint de un sitio de sharepoint, está basado en la API disponibilizada por Microsoft llamada Microsoft Graph. Este paquete contiene toda la lógica interna para que el manejo de las listas sea fácil y amigable, sin embargo si se desea saber como funciona el paquete o se quire usar alguna de las funcionalidades de este paqeute por separado por favor refrenciarse en el siguiente link: https://learn.microsoft.com/es-es/graph/api/list-list?view=graph-rest-1.0&tabs=http
         """
         return self._main_url
     

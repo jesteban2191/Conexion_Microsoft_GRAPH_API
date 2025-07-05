@@ -7,6 +7,17 @@ import numpy as np
 
 
 def check_type_args(func):
+    """
+    Decorador encargado de verificar la firma de la función que se le pasa y de acuerdo a esa firma confirmar que los arguemtnos de entrada estén y que sean del tipo de datos que indica la firma de dicha función.
+    
+    Args:
+        func: Es la función que se desea pasar por este decorador para que le sean verificados los argumentos de entrada.
+        
+    Raises:
+        TypeError: Se levanta esta excepción cuando no se encuentra algún argumento de entrada necesario para la función llamada o cuando alguno de los argumentos no cumple con el tipo de dato que indidca la firma de la función pasada como arguemnto.
+        
+    Returns:
+        Devuelve el resultado de la función que se llama."""
     @wraps(func)
     def wrapper(*args, **kwargs):
         # Get the function signature
